@@ -1,0 +1,38 @@
+{
+    "name": "david-maximous/fawrypay",
+    "version": "1.0.0",
+    "license": "MIT",
+    "description": "Laravel Payment helper for FawryPay",
+    "keywords": [
+        "online payments",
+        "fawry",
+        "fawrypay"
+    ],
+    "autoload": {
+        "psr-4": {
+            "DavidMaximous\\Fawrypay\\": "src/"
+        }
+    },
+    "require": {
+        "php": ">=7.0",
+        "laravel/framework": ">=6.0",
+        "ext-json": "*",
+        "ext-curl": "*"
+    },
+    "authors": [
+        {
+            "name": "David Maximous",
+            "email": "info@davidmaximous.me"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [
+                "DavidMaximous\\Fawrypay\\FawryPayServiceProvider"
+            ],
+            "aliases": {
+                "FawryPay": "DavidMaximous\\Fawrypay\\Facades"
+            }
+        }
+    }
+}
