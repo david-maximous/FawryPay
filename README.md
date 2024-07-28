@@ -1,5 +1,5 @@
 # Fawry Payment Gateway
-
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/david-maximous/fawrypay.svg?style=flat-square)](https://packagist.org/packages/david-maximous/fawrypay)
 [![Awesome](https://cdn.rawgit.com/sindresorhus/awesome/d7305f38d29fed78fa85652e3a63e154dd8e8829/media/badge.svg)](https://github.com/sindresorhus/awesome)
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
 [![Made With Love](https://img.shields.io/badge/Made%20With-Love-orange.svg)](https://github.com/chetanraj/awesome-github-badges)
@@ -92,17 +92,6 @@ dd($response);
 [
 	'payment_id'=>"", // refrence code that should stored in your orders table
 	'redirect_url'=>"", // redirect url to the payment page
-]
-
-//verify function
-$payment->verify($request);
-
-//outputs
-[
-	'success'=>true,//or false
-    'payment_id'=>"PID",
-	'message'=>"Done Successfully",//message for client
-	'process_data'=>""//payment response
 ]
 ```
 
