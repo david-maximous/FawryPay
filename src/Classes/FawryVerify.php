@@ -32,11 +32,11 @@ class FawryVerify extends BaseController
      */
     public function verify(Request $request)
     {
-        $reference_id = $request->offsetGet('merchantRefNumber');
-        if($request->offsetGet('statusCode') == 200)
+        $reference_id = $request?->offsetGet('merchantRefNumber');
+        if($request?->offsetGet('statusCode') == 200)
         {
-            $hash = hash('sha256', $request->offsetGet('referenceNumber') . $request->offsetGet('merchantRefNumber') . number_format($request->offsetGet('paymentAmount'), 2, ".") . number_format($request->offsetGet('orderAmount'), 2, ".") . $request->offsetGet('orderStatus') . $request->offsetGet('paymentMethod') . number_format($request->offsetGet('fawryFees'), 2, ".") . $request->offsetGet('authNumber') . $request->offsetGet('customerMail') . $request->offsetGet('customerMobile') . $this->fawry_secret);
-            if($hash == $request->offsetGet('signature'))
+            $hash = hash('sha256', $request?->offsetGet('referenceNumber') . $request?->offsetGet('merchantRefNumber') . number_format($request?->offsetGet('paymentAmount'), 2, ".") . number_format($request?->offsetGet('orderAmount'), 2, ".") . $request?->offsetGet('orderStatus') . $request?->offsetGet('paymentMethod') . number_format($request?->offsetGet('fawryFees'), 2, ".") . $request?->offsetGet('authNumber') . $request?->offsetGet('customerMail') . $request?->offsetGet('customerMobile') . $this->fawry_secret);
+            if($hash == $request?->offsetGet('signature'))
             {
                 $status = $this->getPaymentStatus($reference_id);
                 if($status['status'] == 'PAID')
@@ -44,7 +44,7 @@ class FawryVerify extends BaseController
                     return [
                         'success' => true,
                         'payment_id'=>$reference_id,
-                        'message' => __('fawrypay::messages.PAYMENT_SUCCESS'),
+                        'message' => __('fawrypay::messages.PAYMENT_DONE'),
                         'process_data' => $status['process_data']
                     ];
                 }
@@ -58,13 +58,23 @@ class FawryVerify extends BaseController
     public function getPaymentStatus($reference_id)
     {
         $hash = hash('sha256', $this->fawry_merchant . $reference_id . $this->fawry_secret);
-        $response = Http::get($this->fawry_url . 'ECommerceWeb/Fawry/payments/status/v2?merchantCode=' . $this->fawry_merchant . '&merchantRefNumber=' . $reference_id . '&signature=' . $hash)->json();
-        $status = $response['orderStatus'] ?? $response['statusCode'];
+        $request = Http::get($this->fawry_url . 'ECommerceWeb/Fawry/payments/status/v2?merchantCode=' . $this->fawry_merchant . '&merchantRefNumber=' . $reference_id . '&signature=' . $hash)->json();
+        $hash = hash('sha256', $request['fawryRefNumber'] . $request['merchantRefNumber'] . number_format($request['paymentAmount'], 2, ".") . number_format($request['orderAmount'], 2, ".") . $request['orderStatus'] . $request['paymentMethod'] . ($request['paymentRefrenceNumber'] ?? '') . $this->fawry_secret);
+        if(isset($request['messageSignature']) && $request['messageSignature'] == $hash)
+        {
+            $status = $request['orderStatus'] ?? $request['statusCode'] ?? $request['code'];
+            return [
+                'status' => $status,
+                'process_data' => $request,
+            ];
+        }
+        else {
+            return [
+                'status' => 'FAILED',
+                'process_data' => $request,
+            ];
+        }
 
-        return [
-            'status' => $status,
-            'process_data' => $response,
-        ];
     }
 
     public function securityResponse($reference_id, $process_data)
