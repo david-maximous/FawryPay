@@ -45,12 +45,6 @@ return [
 ];
 ```
 
-## Web.php MUST Have Route with name “verify-payment”
-
-```php
-Route::get('/payments/verify/{payment?}',[PaymentController::class,'payment_verify'])->name('verify-payment');
-```
-
 ## How To Make payment request
 
 ```jsx
@@ -96,7 +90,37 @@ dd($response);
 ```
 
 ## How To Make verify request
+- Use only one of the following methods:
 
+
+1. Server Notifications (Webhook/Callback Request) [Recommended]
+```jsx
+use DavidMaximous\Fawrypay\Classes\FawryVerify;
+
+//This method is used for sending the payment status directly to your server, better for payment methods that have pending status (Pay by Reference Code) to get updated when it's paid
+$verify = new FawryVerify();
+
+//verify callback function
+$response = $payment->verifyCallback($verify);
+
+dd($response);
+//Success/Paid output
+[
+    'success'=>true,//or false
+    'payment_id'=>"PID",
+    'message'=>"Done Successfully",//message for client
+    'process_data'=>""//fawry response
+]
+```
+## Web.php MUST Have Route with name “verify-payment” and another route for Callback
+
+```php
+Route::get('/payments/verify/{payment?}',[PaymentController::class,'payment_verify'])->name('verify-payment'); //Should redirect a user to a pending/confirmation page after finishing the payment
+Route::post('/payments/Callback',[PaymentController::class,'verifyCallback'])->name('verify-payment-callback'); //This route should be provided to Fawry in order to use it as your notification endpoint
+```
+
+
+2. Get Payment Status (Manual Verification)
 ```jsx
 use DavidMaximous\Fawrypay\Classes\FawryVerify;
 
@@ -124,11 +148,18 @@ dd($response);
     'process_data'=>""//fawry response
 ]
 ```
+## Web.php MUST Have Route with name “verify-payment”
+
+```php
+Route::get('/payments/verify/{payment?}',[PaymentController::class,'payment_verify'])->name('verify-payment'); //In this case the user should be redirected to a verify function that calls the verify function mentioned above 
+```
+
 
 ## For more information, please check the official documentation
 
 - [Checkout Link Integeration](https://developer.fawrystaging.com/docs/express-checkout/fawrypay-hosted-checkout)
 - [Get Payment Status V2](https://developer.fawrystaging.com/docs/express-checkout/payment-notifications/get-payment-status-v2)
+- [Server Notification V2](https://developer.fawrystaging.com/docs/express-checkout/payment-notifications/server-notification-v2)
 - [Test Cards](https://developer.fawrystaging.com/docs/express-checkout/testing/testing)
 - [Error Codes](https://developer.fawrystaging.com/docs/express-checkout/error-codes/error-codes)
 

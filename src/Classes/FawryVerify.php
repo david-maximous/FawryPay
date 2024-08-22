@@ -35,7 +35,7 @@ class FawryVerify extends BaseController
         $reference_id = $request?->offsetGet('merchantRefNumber');
         if($request?->offsetGet('statusCode') == 200)
         {
-            $hash = hash('sha256', $request?->offsetGet('referenceNumber') . $request?->offsetGet('merchantRefNumber') . number_format($request?->offsetGet('paymentAmount'), 2, ".") . number_format($request?->offsetGet('orderAmount'), 2, ".") . $request?->offsetGet('orderStatus') . $request?->offsetGet('paymentMethod') . number_format($request?->offsetGet('fawryFees'), 2, ".") . $request?->offsetGet('authNumber') . $request?->offsetGet('customerMail') . $request?->offsetGet('customerMobile') . $this->fawry_secret);
+            $hash = hash('sha256', $request?->offsetGet('referenceNumber') . $reference_id . number_format($request?->offsetGet('paymentAmount'), 2, ".") . number_format($request?->offsetGet('orderAmount'), 2, ".") . $request?->offsetGet('orderStatus') . $request?->offsetGet('paymentMethod') . number_format($request?->offsetGet('fawryFees'), 2, ".") . $request?->offsetGet('authNumber') . $request?->offsetGet('customerMail') . $request?->offsetGet('customerMobile') . $this->fawry_secret);
             if($hash == $request?->offsetGet('signature'))
             {
                 $status = $this->getPaymentStatus($reference_id);
@@ -51,6 +51,35 @@ class FawryVerify extends BaseController
                 else $this->failedResponse($reference_id, $status['status'], $status['process_data']);
             }
             else $this->securityResponse($reference_id, $request->all());
+        }
+        else $this->failedResponse($reference_id, $request->offsetGet('statusCode'), $request->all());
+    }
+
+    /**
+     * @param Request $request
+     * @return array|void
+     */
+    public function verifyCallback(Request $request)
+    {
+        $reference_id = $request?->offsetGet('merchantRefNumber');
+        if($request?->offsetGet('orderStatus') == 'PAID')
+        {
+            $hash = hash('sha256', $request?->offsetGet('fawryRefNumber') . $reference_id . number_format($request?->offsetGet('paymentAmount'), 2, ".") . number_format($request?->offsetGet('orderAmount'), 2, ".") . $request?->offsetGet('orderStatus') . $request?->offsetGet('paymentMethod') . $request?->offsetGet('paymentRefrenceNumber') . $this->fawry_secret);
+            if($hash == $request?->offsetGet('messageSignature'))
+            {
+                $status = $this->getPaymentStatus($reference_id);
+                if($status['status'] == 'PAID')
+                {
+                    return [
+                        'success' => true,
+                        'payment_id'=>$reference_id,
+                        'message' => __('fawrypay::messages.PAYMENT_DONE'),
+                        'process_data' => $status['process_data']
+                    ];
+                }
+                else $this->failedResponse($reference_id, $status['status'], $status['process_data']);
+            }
+            else $this->securityResponse($reference_id, $request->all()); Log::info($request);
         }
         else $this->failedResponse($reference_id, $request->offsetGet('statusCode'), $request->all());
     }
